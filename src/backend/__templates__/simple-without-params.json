@@ -1,0 +1,42 @@
+{
+  "includes": {
+    "priority": 1,
+    "content": "#include <stdio.h>\n#include <math.h>\n#include <stdio.h> // for file output\n#include <stdlib.h>  /* For exit() function */\n\n#include <iostream>\n\nusing namespace std;\n\n#include <adolc/adolc.h>             /* use of ALL ADOL-C interfaces */\n#include <adolc/adouble.h>             /* use of ALL ADOL-C interfaces */\n#include <adolc/drivers/drivers.h>    // use of \"Easy to Use\" drivers,\n                                      // grants the gradient(.)\n#include <adolc/taping.h>             // use of taping\n#include <cstdlib>\n\n\n\n// adolc related stuff\nint tape_id = 1; // to id the tape in adolc\nsize_t tape_stats[STAT_SIZE];\n\n\n\n// The number of neurons on each network\nconst int number_of_neurons = 20;\n\n"
+  },
+  "number_of_xi": {
+    "priority": 2,
+    "content": "const int number_of_xi = "
+  },
+  "configs": {
+    "priority": 3,
+    "content": "\ndouble learning_rate = 0.01;\n\nint max_number_of_iterations = 1000000;\n\nint print_after_this_number_of_iterations = 5000;\n\nint adam_restart_after_this_iterations = 50000;\n\n// the number of weights each network has\n// this is 3 + number of parameters\nconst int weights_per_neuron = 3;\n\n// the number of functions in the system\nconst int number_of_functions = 1;\n\n// the total number of variables\n// in all the networks\nconst int number_of_variables =\n  weights_per_neuron*\n  number_of_functions*\n  number_of_neurons;\n\n\n\n"
+  },
+  "x_min": {
+    "priority": 4,
+    "content":"double x_min = "
+  },
+  "x_max": {
+    "priority": 5,
+    "content":"double x_max = "
+  },
+  "xi": {
+    "priority": 6,
+    "content":"\n\n// // points xi\ndouble xi[number_of_xi]; // = {0.0, 0.5, 1.0};\n\n\n\n"
+  },
+  "y0": {
+    "priority": 7,
+    "content":"// the initial values\ndouble Y0 = "
+  },
+  "x0":{
+    "priority": 8,
+    "content":"double X0 = "
+  },
+  "function": {
+    "priority": 9,
+    "content":"\nadouble f (double x, adouble y)\n"
+  },
+  "end_file": {
+    "priority": 10,
+    "content":"\n// a function to write the results to a file\nvoid write_results_to_file(double * p) {\n   \n  // let's write the output to a file\n  FILE * f = fopen (\"weights_data.dat\", \"w\");\n  // the first line is the number of variables\n  fprintf (f, \"%d\\n\", number_of_variables); \n  // the second line is the number of neurons\n  fprintf (f, \"%d\\n\", number_of_neurons); \n  // next, x_min\n  fprintf (f, \"%16.16e\\n\", x_min); \n  // and then, x_max\n  fprintf (f, \"%16.16e\\n\", x_max);\n  // x0 \n  fprintf (f, \"%16.16e\\n\", X0);\n  // y0 \n  fprintf (f, \"%16.16e\\n\", Y0);\n  // finally, the weights\n  for (int i = 0; i < number_of_variables; i++){\n    fprintf (f, \"%16.16e\\n\", p[i]);\n  }\n  fclose (f);\n  // end of writing to file\n}\n\n// the random generation functions\ndouble frand() {\n  // returns a random number between 0 and 1\n  return (1.0d*rand())/(1.0d*RAND_MAX);\n}\n\ndouble random(double min, double max) {\n  // returns a random number between min and max\n  return min + frand() * (max - min);\n}\n\n\n\n// the sigmoid function\nadouble SGM (adouble t) {\n  return 1/(1+exp(-t));\n}\n\n// the derivative of the sigmoid function\nadouble dSGMdx (adouble t) {\n  adouble S = SGM(t);\n  return S*(1-S);\n}\n\n\n\n// this is the neural network\n// with one parameters\nadouble N(double x, adouble p[]) {\n  adouble r = 0;\n  for (int i = 0; i < number_of_neurons; i++) {\n    r = r + p[i+2*number_of_neurons]*SGM(p[i]*x + \n                                         p[i+number_of_neurons]);\n  }\n  return r;\n}\n\n\n// // this is the derivative of the neural network\n// // with respect to the variable x\nadouble dNdx(double x, adouble p[]) { \n  adouble r = 0;\n  for (int i = 0; i < number_of_neurons; i++) {\n    r = r + p[i+2*number_of_neurons]*p[i]*dSGMdx(p[i]*x + \n                                                 p[i+number_of_neurons]);\n  }\n  return r;\n}\n\n\n\n// here we create the trial solutions\nadouble TS(double x, adouble p[]) {\n  return Y0 + (x - X0)*N(x,p);\n}\n\n\n// and here we write the derivative of the\n// trial solutions with respect to x\nadouble dTSdx (double x, adouble p[]) {\n  return N(x,p) + (x - X0)*dNdx(x,p);\n}\n\n\n\n// And this is the error function we want\n// to minimize with random xi :-o\nadouble noisy_E(adouble p[]) {\n\n  adouble er = 0;\n\n  adouble e1;\n\n  // let's generate the points xi\n  for (int i = 0; i < number_of_xi; i++) {\n    xi[i] = random(x_min, x_max);\n  }\n  \n  // let's iterate through the x_i\n  for (int i = 0; i < number_of_xi; i++) {\n\n    // first, the error corresponding to f1\n    e1 = (dTSdx(xi[i], p) - // first the derivative\n          // then the right hand side\n          f(xi[i], TS(xi[i], p)));\n\n    er = er + e1*e1;\n\n\n  }\n  return er;\n}\n\n\n\n// this function evals the function E, returns\n// that value, and its gradient.\ndouble E_and_gradient(double * p, double * grad) {\n  // the first thing is to create the tape\n  // evaluating the function.\n  // To do that, we need to convert the doubles in p\n  // to input adoubles. Let's do that.\n\n  adouble ap[number_of_variables];\n\n  adouble result;\n\n  double value_to_return;\n\n  double yy[1];\n\n  trace_on(1);\n  \n  for (int i = 0; i < number_of_variables; i++) {\n    ap[i] <<= p[i];\n  }\n\n  result = noisy_E(ap);\n\n  result >>= value_to_return;\n\n  trace_off();\n\n  gradient(1, number_of_variables, p, grad);\n    \n  return value_to_return;\n  \n}\n\n\nint adam (int max_iter) {\n\n  // the parameter's defintions are in\n  // the global definition section.\n  // int t = 0;\n\n  // vectors for adam\n  double m[number_of_variables];\n  double v[number_of_variables];\n\n  \n  // configuration parameters for adam\n  double adam_stepsize = 0.001;\n  double beta1   = 0.9;\n  double beta2   = 0.999;\n  double epsilon = 1e-8;\n\n\n  double theta[number_of_variables];  // the network weights\n  double g    [number_of_variables];  // the gradient\n  double g2   [number_of_variables];  // the gradient\n  double m_hat[number_of_variables];\n  double v_hat[number_of_variables];\n  double current_error;               // the current error\n  double beta1_t;\n  double beta2_t;\n\n  // let's initialize theta_0 and the 1st and 2nd moments\n  for (int i = 0; i < number_of_variables; i++) {\n    theta[i] = random(-1.0, 1.0); // random weight\n    m[i] = 0;                     // 1st moment\n    v[i] = 0;                     // 2nd moment\n  }\n\n  //while theta_t not converged do\n  for (int t = 0; t < max_iter; t++) { \n    // let's get the gradient and the function value\n    current_error = E_and_gradient(theta, g);\n\n\n    \n    if (t % print_after_this_number_of_iterations == 0) { \n      printf (\"%7d:  %3.8f.\\n\", \n              t,\n              current_error);\n    }\n\n    if ((t > 0) & (t % adam_restart_after_this_iterations == 0)) {\n\n      for (int i = 0; i < number_of_variables; i++) {\n        // first m\n        m[i] = 0;\n        v[i] = 0;\n      }\n      printf (\"Writing data to file\\n\");\n      write_results_to_file(theta);\n    }\n      \n\n    // let's update the betai_t\n    beta1_t = beta1_t * beta1_t;\n    beta2_t = beta2_t * beta2_t;\n\n    // m_t = beta1 * m1_t + (1 - beta1)*gt\n    for (int i = 0; i < number_of_variables; i++) {\n      // first m\n      m[i] = beta1 * m[i] + (1 - beta1)*g[i];\n\n      // then v\n      v[i] = beta2 * v[i] + (1 - beta2)*g[i]*g[i];\n\n      // m_hat\n      m_hat[i] = m[i] / (1 - beta1_t);\n\n      // v_hat\n      v_hat[i] = v[i] / (1 - beta2_t);\n\n      // now the weights\n\n      theta[i] = theta[i] - adam_stepsize * m_hat[i] / (sqrt(v_hat[i]) + epsilon);\n\n    }\n    \n  }\n  printf (\"Stopped at iter %7d, with error  %3.8f.\\n\", \n              max_iter,\n              current_error);\n  \n  write_results_to_file(theta);\n\n  return 0;\n  \n  \n}\n\n\n\nint main (void) {\n  // let's seed the random number generation\n  srand(time(0));\n\n  adam(max_number_of_iterations);\n\n  return 1;\n}\n"
+  }
+}
