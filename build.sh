@@ -9,5 +9,3 @@ fi
 pyinstaller src/main.py --workpath bin/build/ --distpath bin/dist/ --specpath bin/ -n "nnode-template-system"
 
 ./bin/dist/nnode-template-system/nnode-template-system.exe
-
-cat
