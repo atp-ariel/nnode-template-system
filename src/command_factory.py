@@ -1,4 +1,4 @@
-from src.console.command import Command
+from command import Command
 from typing import AnyStr
 
 class CommandFactory:
@@ -7,4 +7,4 @@ class CommandFactory:
         activated = list(filter(lambda comm: comm.NAME.upper() == name.upper(), Command.__subclasses__()))
         if len(activated) == 1:
             return activated[0]()
-        raise Exception("Unknown command")
+        return "Unknown command"

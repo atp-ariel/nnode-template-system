@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import AnyStr
-from src.backend.constant import CPP_EXTENSION
+from constant import CPP_EXTENSION
 
 class ManagerFile:
     @staticmethod

@@ -1,7 +1,7 @@
-from typing import Dict, List, AnyStr
-from src.console.command_factory import CommandFactory
+from typing import List, AnyStr
+from command_factory import CommandFactory
 from colorama import Fore, Style
-from src.console.constant import MAIN_CYCLE, LINUX
+from constant import MAIN_CYCLE, LINUX
 
 def print_yellow(txt: str, bold=True):
     print(((Fore.YELLOW + (Style.BRIGHT if bold else "")) if LINUX else "") + txt + (Fore.RESET if LINUX else ""))
@@ -17,9 +17,13 @@ def get_commands_options() -> List:
     print_yellow(CommandFactory.get_instance("commands").execute(), True)
 
 def command_detection(line: AnyStr) -> None:
-    ret = CommandFactory.get_instance(line).execute()
+    ret = CommandFactory.get_instance(line)
     if isinstance(ret, str):
-        print_yellow(ret)
+        print(ret)
+    else:
+        ret = ret.execute()
+        if isinstance(ret, str):
+            print_yellow(ret)
 
 def verify_kill():
     print((Fore.RED if LINUX else "" )+ "Are you sure? [y/n]")

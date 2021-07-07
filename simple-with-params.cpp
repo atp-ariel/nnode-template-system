@@ -41,7 +41,7 @@ size_t tape_stats[STAT_SIZE];
 // The number of neurons on each network
 const int number_of_neurons = 10;
 
-const int number_of_xi =10;
+const int number_of_xi = 10;
 
 const int number_of_ai = 2;
 
@@ -242,15 +242,11 @@ adouble E(adouble p[]) {
 
   adouble e1;
 
-  // double x;
-  
   // let's iterate through the x_i
   for (int i = 0; i < number_of_xi; i++) {
 
     for (int j = 0; j < number_of_ai; j++) {
 
-      //printf("%4g, %4g, %4g\n", a_i, b_i, xi[i]);
-          
       // first, the error corresponding to f1
       e1 = (dTSdx(xi[i], p, ai[j]) - // first the derivative
             // then the right hand side
@@ -258,10 +254,6 @@ adouble E(adouble p[]) {
 
       er = er + e1*e1;
 
-      // for debugging purposes
-      // let's print the a_i, b_i, and x_i
-      // so far it is working
-      /* printf("%4g, %4g, %4g\n", a_i, b_i, xi[i]); */
     }
   }
   return er;
@@ -307,13 +299,6 @@ adouble noisy_E(adouble p[]) {
     
   }
 
-  // let's add the end point
-  // e1 = (dTSdx(x_max, p) - // first the derivative
-  //         // then the right hand side
-  //         f(x_max, TS(x_max, p)));
-
-  // er = er + e1*e1;
-
   return er;
 }
 
@@ -343,7 +328,6 @@ double eval_E_and_create_tape_no_gsl (double *v) {
 
   trace_off();
 
-  // function(1,1,number_of_variables, p, yy);
 
   return value_to_return;
   
@@ -487,13 +471,6 @@ int main (void) {
   for (int i = 1; i <= number_of_xi; i++){
     xi[i-1] = x_min + i*(x_max - x_min)/(1.0*number_of_xi);
   }
-
-  // let's define the ai
-  // for (int i = 0; i < number_of_ai; i++){
-  //   ai[i] = a_min + i*(a_max - a_min)/(1.0*(number_of_ai-1));
-  //   cout << i << ": " << ai[i] << endl;
-  // }
-
 
   // let's initialize the weights to a random value
   for (int i = 0; i < number_of_variables; i++){

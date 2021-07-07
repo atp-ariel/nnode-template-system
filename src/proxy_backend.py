@@ -1,6 +1,6 @@
-from src.backend.template import Template
+from template import Template
 from typing import AnyStr, Tuple
-from src.backend.manage_file import ManagerFile
+from manage_file import ManagerFile
 
 def get_template_class(template_name: AnyStr):
     for template in Template.__subclasses__():

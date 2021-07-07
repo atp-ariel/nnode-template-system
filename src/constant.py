@@ -7,3 +7,5 @@ MAIN_CYCLE = {
 
 from sys import platform
 LINUX = (platform == "linux")
+
+CPP_EXTENSION = ".cpp"

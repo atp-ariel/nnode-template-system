@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod
 from sys import exit
 from colorama import Fore, Style
-from src.console.constant import MAIN_CYCLE, LINUX
-from src.backend.proxy_backend import get_all_meta_templates, get_template_class
-from src.console.state_machines import StateMachine
+from constant import MAIN_CYCLE, LINUX
+from proxy_backend import get_all_meta_templates
+from state_machines import StateMachine
 
 class Command(metaclass=ABCMeta):
     NAME = ""
